@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: postgres-deployment 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: postgres
+  template: 
+    metadata: 
+      labels:
+        component: postgres
+    spec:
+      volumes: # allocate storage according to the PVC. gives access to storage
+        - name: postgres-storage
+          persistentVolumeClaim:
+            claimName: database-persistent-volume-claim
+      containers:
+        - name: postgres
+          image: postgres
+          ports:
+            - containerPort: 5432
+          volumeMounts: # how we want to use the storage
+            - name: postgres-storage # MOST IMPORTANT LINE
+              mountPath: /var/lib/postgresql/data # where inside the cointainer the storage is made available
+              subPath: postgres # particular for postgres
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: pgpassword
+                  key: PGPASSWORD
